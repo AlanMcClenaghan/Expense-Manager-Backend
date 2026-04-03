@@ -5,7 +5,8 @@ const {
     SF_LOGIN_URL,
     SF_CLIENT_ID,
     SF_CLIENT_SECRET,
-    SF_CALLBACK_URL
+    SF_CALLBACK_URL,
+    APP_URL
 } = require('../config');
 
 // Initialize OAuth2 config
@@ -49,7 +50,7 @@ const callback = async (req, res) => {
         lcStorage.setItem('accessToken', conn.accessToken || '');
         lcStorage.setItem('instanceUrl', conn.instanceUrl || '');
 
-        return res.redirect('https://google.com/');
+        return res.redirect(APP_URL);
     } catch (err) {
         console.error('OAuth token exchange failed:', err.message);
         return res.status(500).send(`OAuth token exchange failed: ${err.message}`);
