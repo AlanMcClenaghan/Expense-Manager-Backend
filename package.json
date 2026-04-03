@@ -10,6 +10,7 @@
   "author": "Alan McClenaghan",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^17.4.0",
     "express": "^5.2.1",
     "jsforce": "^3.10.14",

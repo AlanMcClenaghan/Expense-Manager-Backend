@@ -57,7 +57,54 @@ const callback = async (req, res) => {
     }
 };
 
+// Function to get logged-in user details
+const whoAmI = async (req, res) => {
+    console.log("WHOAMI HIT");
+
+    try {
+        const instanceUrl = lcStorage.getItem('instanceUrl');
+        const accessToken = lcStorage.getItem('accessToken');
+
+        console.log("accessToken:", accessToken ? "exists" : "missing");
+        console.log("instanceUrl:", instanceUrl ? "exists" : "missing");
+
+        if (!accessToken || !instanceUrl) {
+            return res.status(200).send({});
+        }
+
+        const conn = new jsforce.Connection({
+            instanceUrl: instanceUrl,
+            accessToken: accessToken
+        });
+
+        // 🔥 FORCE REQUEST (instead of identity helper)
+        const response = await conn.request(`${instanceUrl}/services/oauth2/userinfo`);
+
+        console.log("USER INFO RECEIVED");
+
+        return res.json(response);
+
+    } catch (error) {
+        console.error("WHOAMI ERROR", error.message);
+
+        lcStorage.clear();
+        return res.status(200).send({});
+    }
+};
+
+// Centralized error handler function
+const handleSalesforceError = (error, res) => {
+    if (error.statusCode === 404 && (error.code === 'NOT_FOUND' || error.errorCode === 'INVALID_SESSION_ID')) {
+        lcStorage.clear()
+        res.status(200).send({})
+    } else {
+        console.error("Error", error)
+        res.status(500).send(error)
+    }
+}
+
 module.exports = {
     login,
-    callback
+    callback,
+    whoAmI
 };
