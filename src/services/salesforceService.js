@@ -98,6 +98,38 @@ const logout = (req, res) => {
     res.redirect(`${APP_URL}/login`)
 }
 
+// Function to get Expenses from Salesforce
+const getExpenses = async (req, res) => {
+    console.log('GET EXPENSES HIT')
+
+    try {
+        const instanceUrl = lcStorage.getItem('instanceUrl')
+        const accessToken = lcStorage.getItem('accessToken')
+
+        console.log('accessToken:', accessToken ? 'exists' : 'missing')
+        console.log('instanceUrl:', instanceUrl ? 'exists' : 'missing')
+
+        if (!accessToken || !instanceUrl) {
+            return res.status(200).send({})
+        }
+
+        const conn = new jsforce.Connection({
+            instanceUrl,
+            accessToken
+        })
+
+        const result = await conn.query(
+            "SELECT Id, Amount__c, Category__c, Date__c, Name, Expense_Name__c, Notes__c FROM Expense__c ORDER BY Date__c DESC"
+        )
+
+        console.log('EXPENSES QUERY SUCCESS')
+        return res.json(result)
+    } catch (error) {
+        console.error('GET EXPENSES ERROR', error)
+        return handleSalesforceError(error, res)
+    }
+}
+
 // Centralized error handler function
 const handleSalesforceError = (error, res) => {
     if (error.statusCode === 404 && (error.code === 'NOT_FOUND' || error.errorCode === 'INVALID_SESSION_ID')) {
@@ -113,5 +145,6 @@ module.exports = {
     login,
     callback,
     whoAmI,
-    logout
+    logout,
+    getExpenses
 };

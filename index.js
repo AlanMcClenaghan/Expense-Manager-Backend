@@ -5,6 +5,7 @@ const cors = require('cors')
 const app = express()
 const {PORT, SERVER_URL} = require('./src/config')
 const authController = require('./src/controllers/authController')
+const expenseController = require('./src/controllers/expenseController')
 const allowedOrigins = ['http://localhost:3000']
 
 app.use(cors({
@@ -17,6 +18,8 @@ app.get('/test', (req, res)=>{
 })
 
 app.use('/oauth2', authController)
+
+app.use('/expenses', expenseController)
 
 app.listen(PORT,()=>{
     console.log(`server is running on: ${SERVER_URL}`)
