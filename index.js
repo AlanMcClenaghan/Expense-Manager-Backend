@@ -1,11 +1,15 @@
 const express = require('express')
-const jsforce = require('jsforce')
+const bodyParser = require('body-parser')
 const cors = require('cors')
 
 const app = express()
 const {PORT, SERVER_URL} = require('./src/config')
 const authController = require('./src/controllers/authController')
 const expenseController = require('./src/controllers/expenseController')
+
+app.use(bodyParser.urlencoded({extended:true}))
+app.use(bodyParser.json())
+
 const allowedOrigins = ['http://localhost:3000']
 
 app.use(cors({

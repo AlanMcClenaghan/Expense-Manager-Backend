@@ -130,6 +130,86 @@ const getExpenses = async (req, res) => {
     }
 }
 
+// Function to Create Expenses in Salesforce
+const createExpense = async (req, res) => {
+    try {
+        const instanceUrl = lcStorage.getItem('instanceUrl')
+        const accessToken = lcStorage.getItem('accessToken')
+
+        if (!accessToken || !instanceUrl) {
+            return res.status(200).send({})
+        }
+
+        const conn = new jsforce.Connection({
+            instanceUrl,
+            accessToken
+        });
+
+        const {
+            Expense_Name__c,
+            Amount__c,
+            Date__c,
+            Category__c,
+            Notes__c
+        } = req.body
+
+        const result = await conn.sobject('Expense__c').create({
+            Expense_Name__c,
+            Amount__c,
+            Date__c,
+            Category__c,
+            Notes__c
+        })
+
+        console.log('result', result)
+        return res.json(result)
+    } catch (error) {
+        console.error('CREATE EXPENSE ERROR:', error)
+        return handleSalesforceError(error, res)
+    }
+}
+
+// Function to Update Expenses in Salesforce
+const updateExpense = async (req, res) => {
+    try {
+        const instanceUrl = lcStorage.getItem('instanceUrl')
+        const accessToken = lcStorage.getItem('accessToken')
+
+        if (!accessToken || !instanceUrl) {
+            return res.status(200).send({})
+        }
+
+        const conn = new jsforce.Connection({
+            instanceUrl,
+            accessToken
+        });
+
+        const {id} = req.params
+        const {
+            Expense_Name__c,
+            Amount__c,
+            Date__c,
+            Category__c,
+            Notes__c
+        } = req.body
+
+        const result = await conn.sobject('Expense__c').update({
+            Id:id,
+            Expense_Name__c,
+            Amount__c,
+            Date__c,
+            Category__c,
+            Notes__c
+        })
+
+        console.log('result', result)
+        return res.json(result)
+    } catch (error) {
+        console.error('CREATE EXPENSE ERROR:', error)
+        return handleSalesforceError(error, res)
+    }
+}
+
 // Centralized error handler function
 const handleSalesforceError = (error, res) => {
     if (error.statusCode === 404 && (error.code === 'NOT_FOUND' || error.errorCode === 'INVALID_SESSION_ID')) {
@@ -146,5 +226,7 @@ module.exports = {
     callback,
     whoAmI,
     logout,
-    getExpenses
+    getExpenses,
+    createExpense,
+    updateExpense
 };
