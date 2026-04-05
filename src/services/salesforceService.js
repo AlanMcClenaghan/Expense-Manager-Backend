@@ -57,40 +57,38 @@ const callback = async (req, res) => {
     }
 };
 
+// Function to Create Connection 
+const createConnection = () => {
+    let instanceUrl = lcStorage.getItem('instanceUrl')
+    let accessToken = lcStorage.getItem('accessToken')
+
+    if (!accessToken || !instanceUrl) {
+        return null
+    }
+
+    return new jsforce.Connection({
+        accessToken,
+        instanceUrl
+    })
+}
+
 // Function to get logged-in user details
 const whoAmI = async (req, res) => {
-    console.log("WHOAMI HIT");
-
     try {
-        const instanceUrl = lcStorage.getItem('instanceUrl');
-        const accessToken = lcStorage.getItem('accessToken');
+        const conn = createConnection()
 
-        console.log("accessToken:", accessToken ? "exists" : "missing");
-        console.log("instanceUrl:", instanceUrl ? "exists" : "missing");
-
-        if (!accessToken || !instanceUrl) {
+        if (!conn) {
             return res.status(200).send({});
         }
 
-        const conn = new jsforce.Connection({
-            instanceUrl: instanceUrl,
-            accessToken: accessToken
-        });
-
-        // 🔥 FORCE REQUEST (instead of identity helper)
-        const response = await conn.request(`${instanceUrl}/services/oauth2/userinfo`);
-
-        console.log("USER INFO RECEIVED");
-
+        const response = await conn.request(`${conn.instanceUrl}/services/oauth2/userinfo`);
         return res.json(response);
-
     } catch (error) {
-        console.error("WHOAMI ERROR", error.message);
-
+        console.error('WHOAMI ERROR', error.message);
         lcStorage.clear();
         return res.status(200).send({});
     }
-};
+}
 
 // Function to perform Salesforce logout and clear localstorage
 const logout = (req, res) => {
@@ -100,29 +98,18 @@ const logout = (req, res) => {
 
 // Function to get Expenses from Salesforce
 const getExpenses = async (req, res) => {
-    console.log('GET EXPENSES HIT')
 
     try {
-        const instanceUrl = lcStorage.getItem('instanceUrl')
-        const accessToken = lcStorage.getItem('accessToken')
+        const conn = createConnection()
 
-        console.log('accessToken:', accessToken ? 'exists' : 'missing')
-        console.log('instanceUrl:', instanceUrl ? 'exists' : 'missing')
-
-        if (!accessToken || !instanceUrl) {
-            return res.status(200).send({})
+        if (!conn) {
+            return res.status(200).send({});
         }
-
-        const conn = new jsforce.Connection({
-            instanceUrl,
-            accessToken
-        })
 
         const result = await conn.query(
             "SELECT Id, Amount__c, Category__c, Date__c, Name, Expense_Name__c, Notes__c FROM Expense__c ORDER BY Date__c DESC"
         )
 
-        console.log('EXPENSES QUERY SUCCESS')
         return res.json(result)
     } catch (error) {
         console.error('GET EXPENSES ERROR', error)
@@ -133,17 +120,11 @@ const getExpenses = async (req, res) => {
 // Function to Create Expenses in Salesforce
 const createExpense = async (req, res) => {
     try {
-        const instanceUrl = lcStorage.getItem('instanceUrl')
-        const accessToken = lcStorage.getItem('accessToken')
+        const conn = createConnection();
 
-        if (!accessToken || !instanceUrl) {
+        if (!conn) {
             return res.status(200).send({})
         }
-
-        const conn = new jsforce.Connection({
-            instanceUrl,
-            accessToken
-        });
 
         const {
             Expense_Name__c,
@@ -161,7 +142,6 @@ const createExpense = async (req, res) => {
             Notes__c
         })
 
-        console.log('result', result)
         return res.json(result)
     } catch (error) {
         console.error('CREATE EXPENSE ERROR:', error)
@@ -172,17 +152,11 @@ const createExpense = async (req, res) => {
 // Function to Update Expenses in Salesforce
 const updateExpense = async (req, res) => {
     try {
-        const instanceUrl = lcStorage.getItem('instanceUrl')
-        const accessToken = lcStorage.getItem('accessToken')
+        const conn = createConnection()
 
-        if (!accessToken || !instanceUrl) {
+        if (!conn) {
             return res.status(200).send({})
         }
-
-        const conn = new jsforce.Connection({
-            instanceUrl,
-            accessToken
-        });
 
         const {id} = req.params
         const {
@@ -202,7 +176,25 @@ const updateExpense = async (req, res) => {
             Notes__c
         })
 
-        console.log('result', result)
+        return res.json(result)
+    } catch (error) {
+        console.error('UPDATE EXPENSE ERROR:', error)
+        return handleSalesforceError(error, res)
+    }
+}
+
+// Function to Update Expenses in Salesforce
+const deleteExpense = async (req, res) => {
+    try {
+        const conn = createConnection()
+
+        if (!conn) {
+            return res.status(200).send({})
+        }
+
+        const {id} = req.params
+        const result = await conn.sobject('Expense__c').destroy(id)
+
         return res.json(result)
     } catch (error) {
         console.error('CREATE EXPENSE ERROR:', error)
@@ -228,5 +220,6 @@ module.exports = {
     logout,
     getExpenses,
     createExpense,
-    updateExpense
+    updateExpense,
+    deleteExpense
 };

@@ -6,5 +6,6 @@ const salesforceService = require('../services/salesforceService')
 router.get('/', salesforceService.getExpenses)
 router.post('/', salesforceService.createExpense)
 router.put('/:id', salesforceService.updateExpense)
+router.delete('/:id', salesforceService.deleteExpense)
 
 module.exports = router
